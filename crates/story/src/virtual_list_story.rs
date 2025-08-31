@@ -1,4 +1,4 @@
-use std::{ops::Range, rc::Rc};
+use std::{cell::RefCell, ops::Range, rc::Rc};
 
 use gpui::{
     div, px, size, App, AppContext, Context, Div, Entity, FocusHandle, Focusable,
@@ -10,7 +10,8 @@ use gpui_component::{
     divider::Divider,
     h_flex,
     scroll::{Scrollbar, ScrollbarAxis, ScrollbarState},
-    v_flex, v_virtual_list, ActiveTheme as _, Selectable, Sizable, VirtualListScrollHandle,
+    v_flex, v_virtual_list, ActiveTheme as _, Selectable, Sizable, VirtualListItemSizes,
+    VirtualListScrollHandle,
 };
 
 pub struct VirtualListStory {
@@ -18,7 +19,7 @@ pub struct VirtualListStory {
     scroll_handle: VirtualListScrollHandle,
     scroll_state: ScrollbarState,
     items: Vec<String>,
-    item_sizes: Rc<Vec<Size<Pixels>>>,
+    item_sizes: VirtualListItemSizes,
     columns_count: usize,
     axis: ScrollbarAxis,
     size_mode: usize,
@@ -37,7 +38,7 @@ impl VirtualListStory {
             scroll_handle: VirtualListScrollHandle::new(),
             scroll_state: ScrollbarState::default(),
             items,
-            item_sizes: Rc::new(item_sizes),
+            item_sizes: Rc::new(RefCell::new(item_sizes.into())),
             columns_count: 100,
             axis: ScrollbarAxis::Both,
             size_mode: 0,
@@ -67,7 +68,7 @@ impl VirtualListStory {
             self.columns_count = 10;
         }
 
-        self.item_sizes = Rc::new(self.items.iter().map(|_| ITEM_SIZE).collect());
+        self.item_sizes = Rc::new(RefCell::new(self.items.iter().map(|_| ITEM_SIZE).collect()));
 
         self.scroll_state = ScrollbarState::default();
         cx.notify();

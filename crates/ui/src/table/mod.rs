@@ -1,4 +1,4 @@
-use std::{ops::Range, rc::Rc, time::Duration};
+use std::{cell::RefCell, ops::Range, rc::Rc, time::Duration};
 
 use crate::{
     actions::{Cancel, SelectNext, SelectPrev},
@@ -7,7 +7,7 @@ use crate::{
     popup_menu::PopupMenu,
     scroll::{self, ScrollableMask, Scrollbar, ScrollbarState},
     v_flex, ActiveTheme, Icon, IconName, Sizable, Size, StyleSized as _, StyledExt,
-    VirtualListScrollHandle,
+    VirtualListItemSizes, VirtualListScrollHandle,
 };
 use gpui::{
     actions, canvas, div, prelude::FluentBuilder, px, uniform_list, App, AppContext, Axis, Bounds,
@@ -1038,7 +1038,7 @@ where
         row_ix: usize,
         rows_count: usize,
         left_columns_count: usize,
-        col_sizes: Rc<Vec<gpui::Size<Pixels>>>,
+        col_sizes: VirtualListItemSizes,
         columns_count: usize,
         extra_rows_count: usize,
         window: &mut Window,
@@ -1378,14 +1378,15 @@ where
                                     move |table, visible_range: Range<usize>, window, cx| {
                                         // We must calculate the col sizes here, because the col sizes
                                         // need render_th first, then that method will set the bounds of each col.
-                                        let col_sizes: Rc<Vec<gpui::Size<Pixels>>> = Rc::new(
-                                            table
-                                                .col_groups
-                                                .iter()
-                                                .skip(left_columns_count)
-                                                .map(|col| col.bounds.size)
-                                                .collect(),
-                                        );
+                                        let col_sizes: VirtualListItemSizes =
+                                            Rc::new(RefCell::new(
+                                                table
+                                                    .col_groups
+                                                    .iter()
+                                                    .skip(left_columns_count)
+                                                    .map(|col| col.bounds.size)
+                                                    .collect(),
+                                            ));
 
                                         table.load_more_if_need(
                                             rows_count,

@@ -114,6 +114,8 @@ impl VirtualListScrollHandle {
     }
 }
 
+pub type VirtualListItemSizes = Rc<RefCell<Vec<Size<Pixels>>>>;
+
 /// Create a [`VirtualList`] in vertical direction.
 ///
 /// This is like `uniform_list` in GPUI, but support two axis.
@@ -125,7 +127,7 @@ impl VirtualListScrollHandle {
 pub fn v_virtual_list<R, V>(
     view: Entity<V>,
     id: impl Into<ElementId>,
-    item_sizes: Rc<Vec<Size<Pixels>>>,
+    item_sizes: VirtualListItemSizes,
     f: impl 'static + Fn(&mut V, Range<usize>, &mut Window, &mut Context<V>) -> Vec<R>,
 ) -> VirtualList
 where
@@ -142,7 +144,7 @@ where
 pub fn h_virtual_list<R, V>(
     view: Entity<V>,
     id: impl Into<ElementId>,
-    item_sizes: Rc<Vec<Size<Pixels>>>,
+    item_sizes: VirtualListItemSizes,
     f: impl 'static + Fn(&mut V, Range<usize>, &mut Window, &mut Context<V>) -> Vec<R>,
 ) -> VirtualList
 where
@@ -156,7 +158,7 @@ pub(crate) fn virtual_list<R, V>(
     view: Entity<V>,
     id: impl Into<ElementId>,
     axis: Axis,
-    item_sizes: Rc<Vec<Size<Pixels>>>,
+    item_sizes: VirtualListItemSizes,
     f: impl 'static + Fn(&mut V, Range<usize>, &mut Window, &mut Context<V>) -> Vec<R>,
 ) -> VirtualList
 where
@@ -183,7 +185,6 @@ where
             .overflow_scroll()
             .track_scroll(&scroll_handle),
         scroll_handle,
-        items_count: item_sizes.len(),
         item_sizes,
         render_items: Box::new(render_range),
         sizing_behavior: ListSizingBehavior::default(),
@@ -196,8 +197,7 @@ pub struct VirtualList {
     axis: Axis,
     base: Stateful<Div>,
     scroll_handle: VirtualListScrollHandle,
-    items_count: usize,
-    item_sizes: Rc<Vec<Size<Pixels>>>,
+    item_sizes: VirtualListItemSizes,
     render_items: Box<
         dyn for<'a> Fn(Range<usize>, &'a mut Window, &'a mut App) -> SmallVec<[AnyElement; 64]>,
     >,
@@ -290,11 +290,12 @@ pub struct VirtualListFrameState {
 
 #[derive(Default, Clone)]
 pub struct ItemSizeLayout {
-    items_sizes: Rc<Vec<Size<Pixels>>>,
+    items_sizes: VirtualListItemSizes,
     content_size: Size<Pixels>,
     sizes: Vec<Pixels>,
     origins: Vec<Pixels>,
     last_layout_bounds: Bounds<Pixels>,
+    last_items_count: usize,
 }
 
 impl IntoElement for VirtualList {
@@ -345,16 +346,22 @@ impl Element for VirtualList {
                             .along(self.axis)
                             .to_pixels(font_size.into(), rem_size);
 
-                        if state.items_sizes != self.item_sizes {
+                        let items_count = { self.item_sizes.borrow().len() };
+
+                        if state.last_items_count != items_count
+                            || state.items_sizes != self.item_sizes
+                        {
+                            state.last_items_count = items_count;
                             state.items_sizes = self.item_sizes.clone();
                             // Prepare each item's size by axis
-                            state.sizes = self
-                                .item_sizes
+                            state.sizes = state
+                                .items_sizes
+                                .borrow()
                                 .iter()
                                 .enumerate()
                                 .map(|(i, size)| {
                                     let size = size.along(self.axis);
-                                    if i + 1 == self.items_count {
+                                    if i + 1 == items_count {
                                         size
                                     } else {
                                         size + gap
@@ -385,6 +392,7 @@ impl Element for VirtualList {
                                     width: px(state.sizes.iter().map(|size| size.0).sum::<f32>()),
                                     height: state
                                         .items_sizes
+                                        .borrow()
                                         .get(0)
                                         .map_or(px(0.), |size| size.height),
                                 }
@@ -392,6 +400,7 @@ impl Element for VirtualList {
                                 Size {
                                     width: state
                                         .items_sizes
+                                        .borrow()
                                         .get(0)
                                         .map_or(px(0.), |size| size.width),
                                     height: px(state.sizes.iter().map(|size| size.0).sum::<f32>()),
@@ -499,6 +508,7 @@ impl Element for VirtualList {
 
         let item_sizes = &layout.size_layout.sizes;
         let item_origins = &layout.size_layout.origins;
+        let items_count = layout.size_layout.sizes.len();
 
         let content_bounds = Bounds::from_corners(
             bounds.origin
@@ -537,7 +547,7 @@ impl Element for VirtualList {
 
         let mut scroll_state = self.scroll_handle.state.borrow_mut();
         scroll_state.axis = axis;
-        scroll_state.items_count = self.items_count;
+        scroll_state.items_count = items_count;
 
         let mut scroll_offset = self.scroll_handle.offset();
         if let Some(scroll_to_item) = scroll_state.deferred_scroll_to_item.take() {
@@ -558,7 +568,7 @@ impl Element for VirtualList {
             window,
             cx,
             |_style, _, hitbox, window, cx| {
-                if self.items_count > 0 {
+                if items_count > 0 {
                     let min_scroll_offset = content_bounds.size.along(self.axis)
                         - layout.size_layout.content_size.along(self.axis);
 
@@ -604,7 +614,7 @@ impl Element for VirtualList {
                                 }
                             }
                             if last_visible_element_ix == 0 {
-                                last_visible_element_ix = self.items_count;
+                                last_visible_element_ix = items_count;
                             } else {
                                 last_visible_element_ix += 1;
                             }
@@ -632,7 +642,7 @@ impl Element for VirtualList {
                                 }
                             }
                             if last_visible_element_ix == 0 {
-                                last_visible_element_ix = self.items_count;
+                                last_visible_element_ix = items_count;
                             } else {
                                 last_visible_element_ix += 1;
                             }
@@ -640,8 +650,8 @@ impl Element for VirtualList {
                         }
                     };
 
-                    let visible_range = first_visible_element_ix
-                        ..cmp::min(last_visible_element_ix, self.items_count);
+                    let visible_range =
+                        first_visible_element_ix..cmp::min(last_visible_element_ix, items_count);
 
                     let items = (self.render_items)(visible_range.clone(), window, cx);
 

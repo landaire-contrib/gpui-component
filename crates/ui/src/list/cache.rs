@@ -1,8 +1,8 @@
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use gpui::{App, Pixels, Size};
 
-use crate::IndexPath;
+use crate::{virtual_list::VirtualListItemSizes, IndexPath};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum RowEntry {
@@ -68,7 +68,7 @@ pub(crate) struct RowsCache {
     pub(crate) items_count: usize,
     /// The sections, the item is number of rows in each section.
     pub(crate) sections: Rc<Vec<usize>>,
-    pub(crate) entries_sizes: Rc<Vec<Size<Pixels>>>,
+    pub(crate) entries_sizes: VirtualListItemSizes,
     measured_size: MeasuredEntrySize,
 }
 
@@ -190,7 +190,7 @@ impl RowsCache {
                 })
                 .collect(),
         );
-        self.entries_sizes = Rc::new(entries_sizes);
+        self.entries_sizes = Rc::new(RefCell::new(entries_sizes.into()));
         self.items_count = total_items_count;
     }
 }
