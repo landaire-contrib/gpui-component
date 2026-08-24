@@ -25,7 +25,7 @@ use gpui::{
 use gpui_base::dock::{PanelId, PanelState, TabGroup};
 use rust_i18n::t;
 
-use crate::{button::Button, menu::PopupMenu};
+use crate::{button::Button, menu::PopupMenu, tab::Tab};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum PanelStyle {
@@ -137,7 +137,6 @@ pub trait Panel: gpui_base::dock::Panel {
     fn inner_padding(&self, cx: &App) -> bool {
         true
     }
-
     /// Whether the tab group draws a title bar above this panel when it is
     /// the only panel in its group.
     ///
@@ -145,6 +144,17 @@ pub trait Panel: gpui_base::dock::Panel {
     /// several panels still draws its tabs, so every panel stays reachable.
     fn title_bar(&self, cx: &App) -> bool {
         true
+    }
+
+    /// Customize this panel's own tab in the tab bar.
+    ///
+    /// The tab group builds a fully wired [`Tab`] -- its index, label,
+    /// selected state, click-to-activate, and drag/drop are already set --
+    /// and hands it here for the panel to do final tweaks to e.g. styling.
+    /// Returns the (possibly customized) tab, so the tab bar's own layout
+    /// and behavior are preserved. The default returns it untouched.
+    fn render_tab(&mut self, tab: Tab, window: &mut Window, cx: &mut Context<Self>) -> Tab {
+        tab
     }
 }
 
@@ -160,6 +170,7 @@ pub trait PanelView: gpui_base::dock::PanelView {
     fn zoom_control(&self, cx: &App) -> Option<PanelControl>;
     fn inner_padding(&self, cx: &App) -> bool;
     fn title_bar(&self, cx: &App) -> bool;
+    fn render_tab(&self, tab: Tab, window: &mut Window, cx: &mut App) -> Tab;
 }
 
 impl<T: Panel> PanelView for Entity<T> {
@@ -197,9 +208,12 @@ impl<T: Panel> PanelView for Entity<T> {
     fn inner_padding(&self, cx: &App) -> bool {
         self.read(cx).inner_padding(cx)
     }
-
     fn title_bar(&self, cx: &App) -> bool {
         self.read(cx).title_bar(cx)
+    }
+
+    fn render_tab(&self, tab: Tab, window: &mut Window, cx: &mut App) -> Tab {
+        self.update(cx, |this, cx| this.render_tab(tab, window, cx))
     }
 }
 
