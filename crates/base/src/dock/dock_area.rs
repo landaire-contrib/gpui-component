@@ -132,6 +132,13 @@ pub struct DockArea {
     tiles: HashMap<NodeId, Cached<TilesState>>,
     panels: HashMap<PanelId, Arc<dyn PanelView>>,
 
+    /// Each tab-group leaf's on-screen rectangle, recorded during render
+    /// (via `on_prepaint`). Lets a host paint spatial overlays -- e.g. a
+    /// vimium-style pane picker badging each pane -- which the pure-data
+    /// tree cannot express. Stale entries for removed nodes are harmless:
+    /// node ids are unique, so a gone node is simply never queried.
+    node_bounds: HashMap<NodeId, Bounds<Pixels>>,
+
     locked: bool,
     zoomed: Option<Zoomed>,
     focus_handle: FocusHandle,
@@ -165,6 +172,7 @@ impl DockArea {
             splits: HashMap::new(),
             tiles: HashMap::new(),
             panels: HashMap::new(),
+            node_bounds: HashMap::new(),
             locked: false,
             zoomed: None,
             focus_handle: cx.focus_handle(),
@@ -202,6 +210,13 @@ impl DockArea {
     /// against it.
     pub fn bounds(&self) -> Bounds<Pixels> {
         self.bounds
+    }
+
+    /// The on-screen rectangle of the tab-group leaf `node`, as of the last
+    /// render, or `None` if the node is not a rendered tab group. For hosts
+    /// painting spatial overlays over panes (e.g. a keyboard pane picker).
+    pub fn node_bounds(&self, node: NodeId) -> Option<Bounds<Pixels>> {
+        self.node_bounds.get(&node).copied()
     }
 
     /// The tree for one region, or `None` for a dock that does not exist.
@@ -1464,7 +1479,28 @@ impl DockArea {
                     .into_any_element()
             }
             PaneRef::Tabs { .. } => match self.groups.get(&node.id()) {
-                Some(cached) => cached.entity.clone().into_any_element(),
+                Some(cached) => {
+                    // Wrap the group so its resolved rect can be recorded for
+                    // spatial overlays (pane picker). The wrapper only holds
+                    // bounds; sizing stays on the parent `resizable_panel`, so
+                    // this does not disturb split layout.
+                    let node_id = node.id();
+                    let area = self.this.clone();
+                    // The `on_prepaint` probe is an absolute, inset-less canvas
+                    // placed at its static position; it must come BEFORE the
+                    // in-flow content child so that position is the wrapper's
+                    // origin (0,0), not offset down by the content's height.
+                    // (Mirrors the dock-frame `bounds` capture below.)
+                    div()
+                        .size_full()
+                        .on_prepaint(move |bounds, _, cx| {
+                            _ = area.update(cx, |area, _| {
+                                area.node_bounds.insert(node_id, bounds);
+                            });
+                        })
+                        .child(cached.entity.clone())
+                        .into_any_element()
+                }
                 None => Empty.into_any_element(),
             },
             PaneRef::Tiles { .. } => match self.tiles.get(&node.id()) {
