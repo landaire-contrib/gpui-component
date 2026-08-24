@@ -671,7 +671,11 @@ impl DockArea {
         self.commit(result, window, cx);
     }
 
-    fn remove_panel_id(&mut self, panel: PanelId, window: &mut Window, cx: &mut Context<Self>) {
+    /// Remove a panel by id, wherever it lives. Unlike [`Self::remove_panel`]
+    /// this does not require a live `Entity`, so it can close a panel the app
+    /// only holds a `PanelId` for (e.g. an unresolved/`InvalidPanel` leaf from
+    /// a restored layout).
+    pub fn remove_panel_id(&mut self, panel: PanelId, window: &mut Window, cx: &mut Context<Self>) {
         let Some(region) = self.placement_of_panel(panel) else {
             return;
         };
@@ -4319,6 +4323,31 @@ mod tests {
         assert!(
             !cx.read(|cx| area.read(cx).is_zoomed()),
             "the area must not fill itself with a group that never zoomed"
+        );
+    }
+
+    /// `remove_panel_id` drops the panel named only by its `PanelId` -- the
+    /// public entry a caller reaches for when it holds an id but no live
+    /// `Entity<P>` (e.g. closing an unresolved leaf from a restored layout,
+    /// where `remove_panel` cannot be called).
+    #[gpui::test]
+    fn remove_panel_id_drops_the_panel_it_names(cx: &mut TestAppContext) {
+        let log = Log::default();
+        let (area, alpha, cx) = two_groups(&log, cx);
+        let alpha_id = panel_id_of(&alpha);
+        assert!(
+            cx.read(|cx| area.read(cx).panel(alpha_id).is_some()),
+            "alpha starts owned by the area"
+        );
+
+        cx.update(|window, cx| {
+            area.update(cx, |area, cx| area.remove_panel_id(alpha_id, window, cx));
+        });
+        cx.run_until_parked();
+
+        assert!(
+            cx.read(|cx| area.read(cx).panel(alpha_id).is_none()),
+            "remove_panel_id removes the panel identified only by its id"
         );
     }
 }
