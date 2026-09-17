@@ -217,6 +217,16 @@ impl Input {
     }
 
     /// Set the developer-assigned identifier exposed to accessibility clients.
+    /// The state this input renders; a compound control reads focus and
+    /// presentation from it.
+    pub(crate) fn state(&self) -> &TextInputState {
+        &self.state
+    }
+
+    pub(crate) fn is_disabled(&self) -> bool {
+        self.disabled
+    }
+
     pub fn accessibility_id(mut self, id: impl Into<SharedString>) -> Self {
         self.accessibility_id = Some(id.into());
         self
