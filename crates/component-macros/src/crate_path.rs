@@ -8,9 +8,12 @@ use quote::quote;
 /// `gpui-kit` and standalone `gpui-component` consumers are honored. When no
 /// manifest is available -- a non-Cargo build such as buck or bazel, where
 /// `proc_macro_crate` has no manifest to read -- fall back to the conventional
-/// `gpui` extern crate name, which is how GPUI is normally imported.
+/// `gpui` extern crate name, which is how GPUI is normally imported. Without
+/// Cargo, `proc_macro_crate` cannot resolve `workspace = true` dependencies and
+/// sees them under their dependency key, so the `gpui` key is tried before the
+/// optional `gpui-fast`.
 pub(crate) fn gpui() -> TokenStream {
-    resolved_path(&["gpui-kit", "gpui-pre", "gpui-fast"]).unwrap_or_else(|| extern_path("gpui"))
+    resolved_path(&["gpui-kit", "gpui-pre", "gpui", "gpui-fast"]).unwrap_or_else(|| extern_path("gpui"))
 }
 
 /// Resolve the `gpui-component` API path, mirroring [`gpui`]: `gpui-kit`
