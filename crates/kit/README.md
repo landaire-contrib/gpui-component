@@ -16,8 +16,14 @@ gpui-kit = { version = "0.7", features = ["gpui-fast"] }
 
 This selects GPUI Fast 0.1.x for the core, platforms, and every enabled Kit layer.
 `gpui_kit::*`, selective macro imports, and `#[gpui_kit::test]` keep working;
-no `[patch]` or `extern crate` alias is needed. Cargo features are additive, so
-upstream packages remain build dependencies while Kit exposes only Fast types.
+no `[patch]` or `extern crate` alias is needed. The upstream GPUI runtime crates
+come from the default `gpui-pre` feature, so they stay in the build until you
+turn off the default features:
+
+```toml
+[dependencies]
+gpui-kit = { version = "0.7", default-features = false, features = ["component", "assets", "gpui-fast"] }
+```
 
 `gpui-kit` depends on the matching set of GPUI crates, so an application
 never lists GPUI itself. `use gpui_kit::*;` is GPUI, and each layer is

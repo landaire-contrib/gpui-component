@@ -48,11 +48,11 @@ For example, `Button::new("save")` has no padding, background, radius, or size b
 Depend on `gpui-kit`, which pins the GPUI crates `gpui-base` was built
 against and re-exports them as `gpui_kit::gpui` and `gpui_kit::platform`, with
 `gpui-base` itself always available at `gpui_kit::base`. Turn off the default
-features to skip the styled layers:
+features to skip the styled layers, and keep a GPUI backend:
 
 ```toml
 [dependencies]
-gpui-kit = { version = "0.7", default-features = false }
+gpui-kit = { version = "0.7", default-features = false, features = ["gpui-pre"] }
 ```
 
 If Cargo reports incompatible GPUI types, check whether your application pulls
@@ -62,6 +62,8 @@ GPUI in from somewhere other than `gpui-kit`.
 
 | Feature     | Enabled by default | Purpose                                                    |
 | ----------- | ------------------ | ---------------------------------------------------------- |
+| `gpui-pre`  | Yes                | Uses the upstream GPUI snapshot as the backend             |
+| `gpui-fast` | No                 | Uses GPUI Fast as the backend, also when `gpui-pre` is on  |
 | `inspector` | No                 | Enables inspector support in both `gpui` and `gpui_macros` |
 
 ## Initialization

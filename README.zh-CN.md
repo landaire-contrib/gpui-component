@@ -116,8 +116,8 @@ gpui-kit = { version = "0.7", features = ["gpui-fast"] }
 ```
 
 原有导入、初始化流程和测试宏保持不变，应用无需 `[patch]` 或 crate 别名。
-默认后端仍是固定版本的上游 GPUI 快照。Cargo features 是累加的，因此选择 Fast 后，
-上游包仍会参与编译。feature 组合和对比命令见
+默认后端仍是固定版本的上游 GPUI 快照，来自默认启用的 `gpui-pre` feature，因此只添加
+`gpui-fast` 时其运行时 crate 仍会参与编译；关闭默认 feature 即可去掉它们。feature 组合和对比命令见
 [Getting Started](https://gpui-kit.com/zh-CN/docs/getting-started)。
 
 ### 基础示例

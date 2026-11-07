@@ -1,5 +1,5 @@
 //! Exercise actual native application teardown in bounded child processes.
-//! Run with `cargo test -p gpui-kit --no-default-features --test native_shutdown`.
+//! Run with `cargo test -p gpui-kit --no-default-features --features gpui-pre --test native_shutdown`.
 //! A desktop session is required; no TestAppContext or test scheduler is used.
 
 use gpui_kit::{

@@ -1,3 +1,6 @@
+#[cfg(not(any(feature = "gpui-pre", feature = "gpui-fast")))]
+compile_error!("gpui-component needs a GPUI backend: enable the `gpui-pre` or `gpui-fast` feature");
+
 #[cfg(feature = "gpui-fast")]
 extern crate gpui_fast as gpui;
 

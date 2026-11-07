@@ -24,6 +24,7 @@ gpui-webview = { version = "0.7", features = ["gpui-fast"] }
 ```
 
 - `gpui-kit` selects the GPUI backend, and this crate's `gpui-fast` feature follows it. The two must agree: enabling only one of them fails to compile, with an error that names the feature to enable.
+- Both crates enable the upstream `gpui-pre` backend by default. To build with GPUI Fast alone, turn off the default features of both and enable `gpui-fast`.
 - On gpui-pre, the native view is attached to the window directly. It covers GPUI content in its bounds, including popovers, dialogs, menus and tooltips. It cannot be clipped either: when its container clips it only partly, for example in a scrolled region, it keeps its full bounds and extends past the container. It is hidden only when it is scrolled out of view entirely or hidden by the application.
 - With `gpui-fast` on macOS, `WebView::new()` registers the native view with window composition so GPUI overlays can render above it. Composition failures are logged and fall back to the plain native attachment.
 - With `gpui-fast` on Linux, `WebView::build()` builds the native view in a window composition surface, with the same fallback.

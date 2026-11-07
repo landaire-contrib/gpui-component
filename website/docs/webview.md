@@ -56,6 +56,8 @@ gpui-webview = { version = "{{gpui_kit_version}}", features = ["gpui-fast"] }
 
 `gpui-webview/gpui-fast` does not switch the backend itself; it enables the composition path. The two features must agree, and a mismatch fails to compile: with only `gpui-kit/gpui-fast`, `gpui-webview` asks for `gpui-webview/gpui-fast`; with only `gpui-webview/gpui-fast`, it asks for `gpui-kit/gpui-fast`.
 
+Both crates enable the upstream `gpui-pre` backend by default. To build with GPUI Fast alone, turn off the default features of both and enable `gpui-fast`.
+
 With `gpui-fast` on macOS, `WebView::new()` automatically registers the WKWebView in the window composition tree. On Linux, `WebView::build()` builds the view in a composition surface, an X11 child window that GPUI cuts the overlays above it out of. Deferred GPUI overlays can then render above the page. Windows retains the native child-view behavior on both backends.
 
 On gpui-pre, the native view is attached to the window directly, as on Windows. It covers GPUI content in its bounds, including popovers, dialogs, menus, and tooltips. It cannot be clipped either: when its container clips it only partly, for example in a scrolled region, the native view keeps its full bounds and extends past the container, over the neighboring UI. It is hidden only when it is scrolled out of view entirely or the application hides it. The same applies when GPUI Fast cannot create the composition surface.

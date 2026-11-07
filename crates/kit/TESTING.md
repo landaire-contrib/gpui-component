@@ -189,7 +189,7 @@ before checking final bounds. Preserve real hit testing for hover-only close con
 
 ```sh
 cargo test -p gpui-kit --features test-support --locked
-cargo test -p gpui-kit --no-default-features --features test-support --locked
+cargo test -p gpui-kit --no-default-features --features gpui-pre,test-support --locked
 ```
 
 Regression coverage includes real form controls and selection, immutable snapshots,

@@ -70,7 +70,8 @@ gpui-kit = { version = "{{gpui_kit_version}}", features = ["gpui-fast"] }
 `[patch]` 或 crate 别名。未启用时，Kit 继续使用下文介绍的上游快照。
 Fast 依赖允许通过 `cargo update` 更新到兼容的 `0.1.x` 版本。
 
-Cargo features 是累加的，因此选择 Fast 后，上游包仍会参与编译。
+上游快照来自默认启用的 `gpui-pre` feature，所以只添加 `gpui-fast` 时其运行时 crate 仍会参与编译；
+关闭默认 feature 后即可去掉它们。
 feature 组合和后端对比命令见 [Getting Started](./getting-started.md#使用-gpui-fast)。
 
 ### 为什么依赖名是 `gpui-pre`

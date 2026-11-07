@@ -140,8 +140,9 @@ gpui-kit = { version = "0.7", features = ["gpui-fast"] }
 
 Keep the same imports, initialization, and test macros; no application `[patch]`
 or crate alias is needed. The default backend remains the pinned upstream GPUI
-snapshot. Cargo features are additive, so upstream packages still compile when
-Fast is selected. See [Getting Started](https://gpui-kit.com/docs/getting-started)
+snapshot, from the default `gpui-pre` feature, so its runtime crates still
+compile when you add `gpui-fast` alone. Turn off the default features to leave
+them out. See [Getting Started](https://gpui-kit.com/docs/getting-started)
 for feature combinations and comparison commands.
 
 ### Basic Example

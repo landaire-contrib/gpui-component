@@ -4,6 +4,11 @@
 //! [`Assets`] for the default component bundle, or [`AllAssets`] for the full
 //! catalog. Applications can provide their own source for additional icons.
 
+#[cfg(not(any(feature = "gpui-pre", feature = "gpui-fast")))]
+compile_error!(
+    "gpui-kit-assets needs a GPUI backend: enable the `gpui-pre` or `gpui-fast` feature"
+);
+
 #[cfg(feature = "gpui-fast")]
 extern crate gpui_fast as gpui;
 #[cfg(all(feature = "gpui-fast", test))]

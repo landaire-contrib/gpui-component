@@ -39,10 +39,15 @@
 //! }
 //! ```
 //!
-//! Enable `gpui-fast` to select GPUI Fast for the core, platform, and enabled
-//! layers without changing imports. Upstream remains the default backend.
+//! Upstream GPUI is the `gpui-pre` feature, on by default. Enable `gpui-fast`
+//! to select GPUI Fast for the core, platform, and enabled layers without
+//! changing imports. With both enabled, Fast is used. To leave the upstream
+//! runtime crates out of the build, turn off the default features.
 //!
 //! See [`component`] for the same program with the styled component library.
+
+#[cfg(not(any(feature = "gpui-pre", feature = "gpui-fast")))]
+compile_error!("gpui-kit needs a GPUI backend: enable the `gpui-pre` or `gpui-fast` feature");
 
 /// Defines unit actions without requiring consumers to depend on GPUI under the
 /// crate name `gpui`.

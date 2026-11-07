@@ -36,14 +36,21 @@ gpui-kit = { version = "{{gpui_kit_version}}", features = ["gpui-fast"] }
 
 这个 feature 会统一切换 GPUI、原生平台、WebAssembly 后端，以及所有已启用的 Kit 层。
 继续使用 `gpui_kit::*`、`gpui_kit::component` 和 `#[gpui_kit::test]` 即可，
-无需 `[patch]`、额外的引擎依赖或 crate 别名。它也支持 `default-features = false`，
-并可与 `assets`、`test-support`、`inspector`、`profiler` 配合使用。
+无需 `[patch]`、额外的引擎依赖或 crate 别名。它可与 `assets`、`test-support`、
+`inspector`、`profiler` 配合使用。
 GPUI Fast 依赖采用 `0.1.0` 版本要求，`cargo update` 可以更新到兼容的 `0.1.x` 版本。
 
-Cargo features 是累加的：启用 Fast 后，整个依赖图通过 Kit 使用的公开类型都会来自 Fast，
-但上游包仍然是构建依赖。不要将 Kit 的 Fast 类型与直接依赖上游 GPUI 得到的类型混用。
+上游 GPUI 运行时 crate 来自默认启用的 `gpui-pre` feature。两个 feature 同时启用时使用 Fast，
+上游运行时 crate 仍然是构建依赖。要在构建中去掉它们，请关闭默认 feature，并列出需要的层：
+
+```toml
+[dependencies]
+gpui-kit = { version = "{{gpui_kit_version}}", default-features = false, features = ["component", "assets", "gpui-fast"] }
+```
+
+不要将 Kit 的 Fast 类型与直接依赖上游 GPUI 得到的类型混用。
 单独使用 Base、Component、资源、FPS、WebView 或 Shell 时，也可以启用各自的
-`gpui-fast` feature 来显式选择后端。
+`gpui-fast` feature 来显式选择后端。FPS 和 Shell 始终会同时编译上游运行时 crate。
 
 在此仓库中，可以分别运行 `cargo run` 和 `cargo run --features gpui-fast` 对比组件展厅。
 WebAssembly 构建使用 [WebAssembly](./webassembly.md) 中说明的 nightly 工具链。

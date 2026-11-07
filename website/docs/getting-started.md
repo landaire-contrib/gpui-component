@@ -37,15 +37,24 @@ gpui-kit = { version = "{{gpui_kit_version}}", features = ["gpui-fast"] }
 The feature switches GPUI, native platforms, the WebAssembly backend, and every
 enabled Kit layer together. Keep using `gpui_kit::*`, `gpui_kit::component`, and
 `#[gpui_kit::test]`; no `[patch]`, extra engine dependency, or crate alias is needed.
-It also works with `default-features = false` and with `assets`, `test-support`,
-`inspector`, or `profiler`. GPUI Fast dependencies use `0.1.0` requirements, so
-`cargo update` can select compatible `0.1.x` releases.
+It also works with `assets`, `test-support`, `inspector`, or `profiler`. GPUI
+Fast dependencies use `0.1.0` requirements, so `cargo update` can select
+compatible `0.1.x` releases.
 
-Cargo features are additive: enabling Fast selects its public types for the whole
-dependency graph, while upstream packages remain build dependencies. Avoid mixing
-Kit's Fast types with a direct dependency on upstream GPUI. For standalone Base,
-Component, assets, FPS, WebView, or Shell consumers, enable their `gpui-fast`
-feature too when selecting a backend explicitly.
+The upstream GPUI runtime crates come from the default `gpui-pre` feature. With
+both features enabled, Fast is used and the upstream runtime crates remain build
+dependencies. To build without them, turn off the default features and list the
+layers you use:
+
+```toml
+[dependencies]
+gpui-kit = { version = "{{gpui_kit_version}}", default-features = false, features = ["component", "assets", "gpui-fast"] }
+```
+
+Avoid mixing Kit's Fast types with a direct dependency on upstream GPUI. For
+standalone Base, Component, assets, FPS, WebView, or Shell consumers, enable
+their `gpui-fast` feature too when selecting a backend explicitly. FPS and Shell
+always build the upstream runtime crates as well.
 
 From this checkout, compare the gallery with `cargo run` and
 `cargo run --features gpui-fast`. WebAssembly builds use the nightly toolchain

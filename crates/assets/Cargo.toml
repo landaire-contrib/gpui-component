@@ -16,7 +16,7 @@ links = "gpui-kit-default-icons"
 
 [dependencies]
 anyhow.workspace = true
-gpui.workspace = true
+gpui = { workspace = true, optional = true }
 gpui-fast = { workspace = true, optional = true }
 log.workspace = true
 
@@ -33,4 +33,7 @@ wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 
 [features]
+default = ["gpui-pre"]
+# Select a GPUI backend. With both enabled, GPUI Fast is used.
+gpui-pre = ["dep:gpui"]
 gpui-fast = ["dep:gpui-fast"]

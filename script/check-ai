@@ -14,10 +14,10 @@ PROFILES = {
     ],
     "rust": [
         ["cargo", "test", "--locked", "-p", "gpui-component", "--no-default-features",
-         "--test", "integration", "--", "controlled_change_callbacks::",
-         "legacy_controls_compat::"],
+         "--features", "gpui-pre", "--test", "integration", "--",
+         "controlled_change_callbacks::", "legacy_controls_compat::"],
         ["cargo", "test", "--locked", "-p", "gpui-component", "--no-default-features",
-         "--lib", "form::form::tests"],
+         "--features", "gpui-pre", "--lib", "form::form::tests"],
     ],
     "shell": [
         ["cargo", "test", "--locked", "-p", "gpui-shell", "--lib", "typings"],

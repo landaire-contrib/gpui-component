@@ -56,6 +56,8 @@ gpui-webview = { version = "{{gpui_kit_version}}", features = ["gpui-fast"] }
 
 `gpui-webview/gpui-fast` 本身不切换后端，只启用合成路径。两个 feature 必须一致，不一致会编译失败：只启用 `gpui-kit/gpui-fast` 时，`gpui-webview` 提示启用 `gpui-webview/gpui-fast`；只启用 `gpui-webview/gpui-fast` 时，提示启用 `gpui-kit/gpui-fast`。
 
+两个 crate 默认都启用上游的 `gpui-pre` 后端。若只使用 GPUI Fast 构建，请关闭两者的默认 feature 并启用 `gpui-fast`。
+
 启用 `gpui-fast` 后，macOS 上的 `WebView::new()` 会自动把 WKWebView 注册到窗口合成树。Linux 上，`WebView::build()` 会把视图建在合成 surface 中，即一个 X11 子窗口，GPUI 会把位于其上方的浮层区域从中挖空。这样延后绘制的 GPUI 浮层就能显示在网页上方。Windows 在两个后端下都保留原生子视图的行为。
 
 在 gpui-pre 下，原生视图与 Windows 一样直接挂在窗口上，会遮住其 bounds 内的 GPUI 内容，包括 popover、dialog、menu 和 tooltip。原生视图也无法被裁剪：容器只裁掉一部分时（例如位于滚动区域中），它仍保持完整的 bounds，溢出到容器外，盖住相邻的界面；只有完全移出可视区或被应用隐藏时才会隐藏。GPUI Fast 无法创建合成 surface 时也是如此。

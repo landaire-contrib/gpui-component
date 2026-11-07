@@ -71,8 +71,9 @@ code; no application `[patch]` or crate alias is needed. Without this feature,
 Kit continues to use the upstream snapshot described below. Fast dependencies
 allow compatible `0.1.x` updates through `cargo update`.
 
-Cargo features are additive, so upstream packages still compile when Fast is
-selected. For feature combinations and backend comparison commands, see
+The upstream snapshot comes from the default `gpui-pre` feature, so its runtime
+crates still compile when you add `gpui-fast` alone. Turn off the default features to
+leave them out. For feature combinations and backend comparison commands, see
 [Getting Started](./getting-started.md#use-gpui-fast).
 
 ### Why the dependency is named `gpui-pre`
