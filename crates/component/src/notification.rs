@@ -12,7 +12,7 @@ use gpui::{
     InteractiveElement as _, IntoElement, ParentElement as _, Pixels, Render, SharedString,
     StatefulInteractiveElement, StyleRefinement, Styled, Subscription, SystemNotification,
     SystemNotificationResponse, WeakEntity, Window, WindowId, div, prelude::FluentBuilder, px,
-    relative,
+    relative, rems,
 };
 use gpui_base::{
     Toast as BaseToast, ToastManager, ToastMotion, ToastOptions, ToastStack, ToastStackState,
@@ -416,7 +416,13 @@ impl Render for Notification {
             None => self.icon.clone(),
             Some(type_) => Some(type_.icon(cx)),
         };
-        let has_icon = icon.is_some();
+        // The icon sits beside the first line of text, which is `text_sm` in
+        // the title or the message, so it is centered on that line's height.
+        let first_line_height = {
+            let mut style = window.text_style();
+            style.font_size = rems(0.875).into();
+            style.line_height_in_pixels(window.rem_size())
+        };
         let placement = self.placement.unwrap_or(cx.theme().notification.placement);
 
         BaseToast::new("notification")
@@ -436,13 +442,20 @@ impl Render for Notification {
             .gap_3()
             .refine_style(&self.style)
             .when_some(icon, |this, icon| {
-                this.child(div().absolute().top(px(18.)).left_4().child(icon))
+                this.child(
+                    div()
+                        .flex_none()
+                        .self_start()
+                        .h(first_line_height)
+                        .flex()
+                        .items_center()
+                        .child(icon),
+                )
             })
             .child(
                 v_flex()
                     .flex_1()
                     .overflow_hidden()
-                    .when(has_icon, |this| this.pl_6())
                     .when_some(self.title.clone(), |this, title| {
                         this.child(div().text_sm().font_semibold().child(title))
                     })
