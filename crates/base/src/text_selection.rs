@@ -3496,6 +3496,22 @@ fn live_text_selection_state(
     WindowSelectionState::existing(window, cx)
 }
 
+/// Escape clears the window's selection when no binding or key handler
+/// claimed it, so closing a popup or cancelling an edit keeps the selection.
+pub(crate) fn init(cx: &mut App) {
+    cx.observe_keystrokes(|event, window, cx| {
+        let keystroke = &event.keystroke;
+        if keystroke.key == "escape"
+            && !keystroke.modifiers.modified()
+            && event.action.is_none()
+            && TextSelection::has_selection(window, cx)
+        {
+            TextSelection::clear(window, cx);
+        }
+    })
+    .detach();
+}
+
 pub(crate) fn clear_window_text_selection(window_id: gpui::WindowId, cx: &mut App) {
     if !cx.has_global::<SelectionStateRegistry>() {
         return;

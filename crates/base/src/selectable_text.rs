@@ -379,6 +379,20 @@ mod tests {
         });
     }
 
+    #[gpui::test]
+    fn escape_clears_the_selection(cx: &mut TestAppContext) {
+        cx.update(crate::init);
+        let (_, cx) = cx.add_window_view(|_, _| SelectableTextTestView);
+        select_across_the_run(cx);
+
+        cx.simulate_keystrokes("escape");
+
+        cx.update(|window, cx| {
+            let _ = window.draw(cx);
+            assert!(!TextSelection::has_selection(window, cx));
+        });
+    }
+
     struct CopyCallbackTestView {
         handle: TextSelectionHandle,
     }

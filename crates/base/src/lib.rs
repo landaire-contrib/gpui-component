@@ -260,6 +260,7 @@ pub fn init(cx: &mut App) {
     tree::init(cx);
     grid_layout::init(cx);
     text::init(cx);
+    text_selection::init(cx);
     root::init(cx);
 }
 
