@@ -3442,9 +3442,12 @@ fn paint_text_selection(state: &Entity<WindowSelectionState>, window: &mut Windo
         }
     });
 
+    // On capture: a control that stops the release in bubble, such as a
+    // click handler, would otherwise leave the gesture running, and every
+    // later press would neither clear the selection nor begin another.
     let mouse_up_state = state.downgrade();
     window.on_mouse_event(move |_: &MouseUpEvent, phase, _, cx| {
-        if phase.bubble()
+        if phase.capture()
             && let Some(state) = mouse_up_state.upgrade()
         {
             state.update(cx, |state, cx| {

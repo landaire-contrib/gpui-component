@@ -241,8 +241,9 @@ mod tests {
     use std::{cell::Cell, rc::Rc};
 
     use gpui::{
-        Bounds, Context, IntoElement, Modifiers, MouseButton, ParentElement as _, Render,
-        Styled as _, TestAppContext, Window, div, point, px, size,
+        Bounds, Context, InteractiveElement as _, IntoElement, Modifiers, MouseButton,
+        ParentElement as _, Render, Styled as _, TestAppContext, VisualTestContext, Window, div,
+        point, px, size,
     };
 
     use super::SelectableText;
@@ -294,6 +295,87 @@ mod tests {
         cx.update(|window, cx| {
             let _ = window.draw(cx);
             assert_eq!(TextSelection::selected_text(window, cx), "alpha beta");
+        });
+    }
+
+    fn select_across_the_run(cx: &mut VisualTestContext) {
+        cx.update(|window, cx| {
+            let _ = window.draw(cx);
+        });
+        cx.simulate_mouse_down(
+            point(px(1.), px(12.)),
+            MouseButton::Left,
+            Modifiers::default(),
+        );
+        cx.simulate_mouse_move(
+            point(px(220.), px(12.)),
+            Some(MouseButton::Left),
+            Modifiers::default(),
+        );
+        cx.simulate_mouse_up(
+            point(px(220.), px(12.)),
+            MouseButton::Left,
+            Modifiers::default(),
+        );
+        cx.update(|window, cx| {
+            let _ = window.draw(cx);
+            assert!(TextSelection::has_selection(window, cx));
+        });
+    }
+
+    fn click_blank_space(cx: &mut VisualTestContext) {
+        let blank = point(px(120.), px(100.));
+        cx.simulate_mouse_move(blank, None, Modifiers::default());
+        cx.simulate_mouse_down(blank, MouseButton::Left, Modifiers::default());
+        cx.simulate_mouse_up(blank, MouseButton::Left, Modifiers::default());
+    }
+
+    #[gpui::test]
+    fn a_press_on_blank_space_clears_the_selection(cx: &mut TestAppContext) {
+        let (_, cx) = cx.add_window_view(|_, _| SelectableTextTestView);
+        select_across_the_run(cx);
+
+        click_blank_space(cx);
+
+        cx.update(|window, cx| {
+            let _ = window.draw(cx);
+            assert!(!TextSelection::has_selection(window, cx));
+        });
+    }
+
+    /// Text inside a control whose release handler stops propagation, as a
+    /// clickable table cell does.
+    struct StoppedReleaseTestView;
+
+    impl Render for StoppedReleaseTestView {
+        fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+            div().size_full().child(TextSelectionLayer).child(
+                div()
+                    .w(px(240.))
+                    .h(px(32.))
+                    .on_mouse_up(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+                    .child(SelectableText::new("local", "alpha beta")),
+            )
+        }
+    }
+
+    #[gpui::test]
+    fn a_stopped_release_still_ends_the_gesture(cx: &mut TestAppContext) {
+        let (_, cx) = cx.add_window_view(|_, _| StoppedReleaseTestView);
+        select_across_the_run(cx);
+
+        // With the button up, moving the pointer does not extend the selection.
+        cx.simulate_mouse_move(point(px(40.), px(12.)), None, Modifiers::default());
+        cx.update(|window, cx| {
+            let _ = window.draw(cx);
+            assert_eq!(TextSelection::selected_text(window, cx), "alpha beta");
+        });
+
+        click_blank_space(cx);
+
+        cx.update(|window, cx| {
+            let _ = window.draw(cx);
+            assert!(!TextSelection::has_selection(window, cx));
         });
     }
 
